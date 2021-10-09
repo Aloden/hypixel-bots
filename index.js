@@ -1,23 +1,21 @@
-let masterData;
-let userNameList = []
-let mainUser = "SallyTheGoon"
-let bottingStatus = "false"
+let mainUser = "Botting account ign"
 let botCoords = ["0", "85", "0"]
 let botMaster = "Input Bot Master IGN"
+let totBot = 25
+let string = ""
+string = string.split("Split so each input in array has format username:password")
+
 const mineflayer = require('mineflayer')
 const pathfinder = require('mineflayer-pathfinder').pathfinder
 const Movements = require('mineflayer-pathfinder').Movements
 const { GoalNear, Goal } = require('mineflayer-pathfinder').goals
 var v = require('vec3')
 
-string = ""
-
-string = string.split("Split so each input in array has format username:password")
-
 let timeout = 1000
-
 let botNum = 0
-let totBot = 25
+let masterData;
+let userNameList = []
+let bottingStatus = "false"
 
 string.forEach(i => {
     setTimeout(() => {
