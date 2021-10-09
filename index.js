@@ -1,92 +1,152 @@
+let masterData;
+let userNameList = []
+let mainUser = "SallyTheGoon"
+let bottingStatus = "false"
+let botCoords = ["0", "85", "0"]
+let botMaster = "Input Bot Master IGN"
 const mineflayer = require('mineflayer')
 const pathfinder = require('mineflayer-pathfinder').pathfinder
 const Movements = require('mineflayer-pathfinder').Movements
 const { GoalNear, Goal } = require('mineflayer-pathfinder').goals
 var v = require('vec3')
-const botlist = require("./config.json")
 
-let bots = []
+string = ""
+
+string = string.split("Split so each input in array has format username:password")
+
 let timeout = 1000
 
-botlist.forEach(i => {
+let botNum = 0
+let totBot = 25
+
+string.forEach(i => {
     setTimeout(() => {
-        createBot(i)
-        console.log(bots)
+        botNum++
+        if(botNum > totBot){
+            return
+        } else {
+            data = i.split(":")
+            if(data === "") return
+            if(data === " ") return
+            createBot(data[0], data[1], botNum)
+        }
     }, timeout)
-    
     timeout = timeout + 1000
 })
 
-let bottingStatus = 0
-statusI = 0
-function createBot ({ username, password }) {
+function createBot (username, password, botNum) {
+    if(!username) return
     const bot = mineflayer.createBot({
-      host: "play.hypixel.net",
-      username,
-      password,
-      "viewDistance": "tiny",
-      "skinParts": false,
-      "showRightPants": false,
-      "showLeftPants": false
+      host: "hypixel.net",
+      version: "1.8.8",
+      "username": username,
+      "password": password,
+      "viewDistance": "tiny"
     })
-    bot.loadPlugin(pathfinder)
-    bot.on("login", async() => {
-        console.log("logged in")
-    })
+    let master = "false"
+    console.log(botNum)
     bot.on("spawn", () => {
-        bot.chat("/p join Aloden_")
+        if(botNum == totBot) {
+            masterData.chat("/pc Everyone is logged in!")
+        }
     })
     bot.on("message", async(msg) => {
         try {
-            if(msg.extra[1].text.includes("start")) {
-                console.log("starting")  
-                botting(bot)  
-                bottingStatus = 1
+            if(master === bot.username) {
+                if(msg.extra[1].text.includes(mainUser)) {
+                    bot.chat(`/p join ${mainUser}`)
+                    masterData.chat("/pc Everyone is logged in!")
+                }
             }
-            if(msg.extra[1].text.includes("join")) {
-                bot.chat("/play pit")
-            }
-            if(msg.extra[1].text.includes("stop")) {
-                clearInterval()
+            if(msg.extra[1].text) {
+                bot.chat(`/party join ${botMaster}`)
+            } 
+            if(msg.extra[1].text.startsWith("start")) {
+                botting(bot)
+                bottingStatus = "true"
+            } 
+            if(msg.extra[1].text.startsWith("stop")) {
+                bottingStatus = "false"
                 bot.chat("/oof")
             }
-            if(msg.extra[1].text.includes("lobby")) {
-                bot.chat("/lobby")
+            if(msg.extra[1].text.startsWith("invite-bots")) {
+                if(master === bot.username) {
+                    bot.chat("/pc yes")
+                    inviteTimeout = 200
+                    userNameList.forEach(i => {
+                        setTimeout(() => {
+                            bot.chat(`/party invite ${i}`)
+                        }, inviteTimeout)
+                        inviteTimeout = 200 + inviteTimeout
+                    })
+                }
+            }
+            if(msg.extra[1].text.startsWith("hub")) {
+                bot.chat("/hub")
+            }
+            if(msg.extra[1].text.startsWith("join")) {
+                bot.chat("/play pit")
+            }
+            if(msg.extra[1].text.startsWith("debug")) {
+                bot.chat("/hub")
+                setTimeout(() => {
+                    bot.chat("/play pit")
+                }, 5000)
+            }
+            if(msg.extra[1].text.startsWith("coords")) {
+                if(master === bot.username) {
+                    let base = msg.extra[1].text
+                    rawCoords = base.split("=")
+                    rawCoords = rawCoords[1]
+                    rawCoords = rawCoords.split(":")
+                    bot.chat("/pc Set coords to " + `x:${rawCoords[0]} y:${rawCoords[1]} z:${rawCoords[2]}`)
+                    botCoords = rawCoords
+                }
+            }
+            if(msg.extra[1].text.startsWith("say:")) {
+                bot.chat(msg.extra[1].text.split("say:"))
             }
         } catch(e) {
             return
         }
     })
-    bot.on("end", async() => {
-        createBot(bot.username, bot.password)
+    bot.on("login", () => {
+        if(botNum == totBot) {
+            master = bot.username
+            masterData = bot
+        } 
+        if(master === "false") {
+            userNameList.push(bot.username)
+        }
+        bottingStatus = "false"
+        console.log(bot.username + "   " + username + ":" + password)
+        if(master === bot.username) {
+            console.log(`Master is ` + bot.username)
+        }
     })
+    bot.on("error", (err) => console.error(err))
 }
-
-function sleep(ms) {
-    return new Promise((resolve) => {
-      setTimeout(resolve, ms);
-    });
-} 
 
 async function botting(botInfo) {
-    setInterval(async() => {
-        if(botInfo.entity.position.y > 100) {
-            let point = v(0, 82, 0)
-            botInfo.lookAt(point)
-            botInfo.setControlState('forward', true)
-            botInfo.setControlState("sprint", true)
-        } else {
+    let b = setInterval(async() => {
+        if(bottingStatus === "false") {
             botInfo.setControlState('forward', false)
             botInfo.setControlState("sprint", false)
-            let point = v(12,82,0)
-            botInfo.lookAt(point)
-            botInfo.setControlState("forward", true)
-            botInfo.setControlState("sprint", true)
-            //botInfo.pathfinder.goto(new GoalNear(11, 82, 0, 0))
+            return
+        } else if(bottingStatus = "true") {
+            if(botInfo.entity.position.y > 50) {
+                let point = v(0, 82, 0)
+                botInfo.lookAt(point)
+                botInfo.setControlState('forward', true)
+                botInfo.setControlState("sprint", true)
+            } else {
+                botInfo.setControlState('forward', false)
+                botInfo.setControlState("sprint", false)
+                let point = v(botCoords[0], botCoords[1], botCoords[2])
+                botInfo.lookAt(point)
+                botInfo.setControlState("forward", true)
+                botInfo.setControlState("sprint", true)
+            }
         }
     }, 100)
-}
-
-async function restart(data) {
-    botting(data)
 }
